@@ -2,7 +2,16 @@ from langchain_core.prompts import ChatPromptTemplate
 
 prompt_template = ChatPromptTemplate([
     ("system", "You are a helpful assistant"),
-    ("user", "Write a medium article title for {topic}")
+    ("user", """
+     As an experienced editor, craft a compelling Medium article title for the topic {topic}.
+     
+     Style: The title should be engaging, informative, and no longer than 60 characters. 
+     
+     Content: Incorporate relevant keywords and use persuasive language to highlight the unique aspects of the topic, 
+     ensuring it attracts and resonates with the intended readers.
+
+     Audience: The target audience IT and Engineering decision makers looking for insights and trends in the industry.
+     """),
 ])
 
 

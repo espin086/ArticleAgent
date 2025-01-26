@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "articleagent"
+version = "0.1.0"
+description = "A tool for writing amazing Medium Articles"
+authors = ["JJ <4843736+espin086@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+langchain = "^0.3.15"
+langchain-openai = "^0.3.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

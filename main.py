@@ -1,15 +1,8 @@
+
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from prompts.WriteArticlePrompt import WriteArticlePrompt
 
 
-model = ChatOpenAI(model="gpt-4o-mini")
 
 
-messages = [
-    SystemMessage("Translate the following from English into Italian"),
-    HumanMessage("hi!"),
-]
-
-response = model.invoke(messages)
-
-print(response)
+print(WriteArticlePrompt.invoke({"topic":"The future of AI in healthcare"}))

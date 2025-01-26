@@ -93,4 +93,3 @@ if __name__ == "__main__":
     logger.info("Article generated: %s", article)
     logger.info("Image URL: %s", image_url)
 
-

@@ -5,6 +5,8 @@ import openai
 from prompts.WriteArticlePrompt import prompt_template as write_article_prompt_template
 from langchain_openai import ChatOpenAI
 from langsmith import wrappers, traceable
+from langsmith import Client
+from langsmith.evaluation import LangChainStringEvaluator, evaluate
 from config import LANGSMITH_PROJECT_NAME
 
 
@@ -20,10 +22,5 @@ def generate_article(topic:str, model:str="gpt-3.5-turbo", temperature:float=0) 
     chain = write_article_prompt_template | llm
     return chain.invoke({"topic":topic})
 
-
-
 if __name__ == "__main__":
     print(generate_article("The future of AI in healthcare"))
-
-
-

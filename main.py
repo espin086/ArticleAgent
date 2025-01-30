@@ -3,6 +3,7 @@ This script generates a medium article about a given topic.
 """
 import logging
 import openai 
+import argparse
 
 
 from langchain_openai import OpenAI
@@ -88,7 +89,18 @@ def generate_article_process(topic: str) -> str:
     return article, image_url
 
 if __name__ == "__main__":
-    topic = "How to retire early working two jobs in your 30s and 40s"
+    parser = argparse.ArgumentParser(
+        description="Generate a Medium article and an accompanying image based on a given topic."
+    )
+    parser.add_argument(
+        "--topic",
+        type=str,
+        required=True,
+        help="The topic for which to generate the Medium article and image."
+    )
+    args = parser.parse_args()
+
+    topic = args.topic
     article, image_url = generate_article_process(topic)
     logger.info("Article generated: %s", article)
     logger.info("Image URL: %s", image_url)

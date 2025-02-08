@@ -8,7 +8,7 @@ from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 prompt_template = PromptTemplate(
     input_variables=["image_desc"],
     template="""
-    Generate an image prompt for: {image_desc}. Make it photo-realistic and professional.   
+    Generate an image prompt for: {image_desc}. Make it photo-realistic and professional. Don't use any text in the image.
     """,
 )
 

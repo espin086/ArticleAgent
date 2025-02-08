@@ -8,6 +8,8 @@ ArticleAgent is a Python-based tool designed to automate the creation of Medium 
 - **Outline Creation**: Develop detailed outlines to structure your articles effectively. 🗂️
 - **Article Writing**: Compose full-length articles aimed at Engineering and IT decision-makers. 🖋️
 - **Image Generation**: Create photo-realistic images to enhance your articles. 🖼️
+- **Article Review and Editing**: Automatically review and edit articles for coherence, brevity, and organization. ✍️
+- **Asynchronous Processing**: Utilize asynchronous function calls to improve performance and reduce latency. ⚡
 - **LangChain Tracing**: Track and visualize the execution of your LangChain processes for better debugging and optimization. 🔍
 
 ## Installation 🛠️
@@ -35,14 +37,14 @@ ArticleAgent is a Python-based tool designed to automate the creation of Medium 
 To generate an article and an accompanying image, run the `main.py` script:
 
 ```bash
-poetry run python main.py
+poetry run python main.py --topic "Your Topic Here"
 ```
 
-This will generate a Medium article on the specified topic and log the article content and image URL.
+This will generate a Medium article on the specified topic, review and edit it, and log the article content and image URL.
 
 ## Configuration ⚙️
 
-- **Model Selection**: You can specify different models for title, outline, and article generation in the `main.py` script.
+- **Model Selection**: You can specify different models for title, outline, article generation, and editing in the `main.py` script.
 - **Logging**: The script uses Python's logging module to provide detailed output of the generation process.
 - **LangChain Tracing**: The project uses LangChain's tracing capabilities to monitor and visualize the execution of the LangChain processes. This is useful for debugging and optimizing the workflow.
 
@@ -53,8 +55,4 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 ## License 📄
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contact 📧
-
-For questions or feedback, please contact JJ at [4843736+espin086@users.noreply.github.com](mailto:4843736+espin086@users.noreply.github.com).
 

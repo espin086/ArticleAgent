@@ -14,6 +14,7 @@ from prompts.WriteTitlePrompt import prompt_template as write_title_prompt_templ
 from prompts.WriteOutlinePrompt import prompt_template as write_outline_prompt_template
 from prompts.WriteArticlePrompt import prompt_template as write_article_prompt_template
 from prompts.GenerateImagePrompt import prompt_template as generate_image_prompt_template
+from prompts.EditArticlePrompt import edit_evaluate_prompt_template
 
 
 from config import LANGSMITH_PROJECT_NAME
@@ -68,6 +69,14 @@ def generate_article_image(topic:str) -> str:
     return response.data[0].url
 
 
+def edit_evaluate_article(article: str, model: str = "gpt-4o-mini", temperature: float = 0) -> str:
+    """
+    Edit and evaluate the article for coherence, brevity, wordiness, and organization.
+    """
+    llm = ChatOpenAI(model=model, temperature=temperature)
+    chain = edit_evaluate_prompt_template | llm
+    return chain.invoke({"article": article})
+
 @traceable(project_name=LANGSMITH_PROJECT_NAME)
 def generate_article_process(topic: str) -> str:
     """
@@ -81,7 +90,10 @@ def generate_article_process(topic: str) -> str:
     outline = generate_outline(topic=title)
     
     logger.info("Generating article...")
-    article = generate_article(topic=title, outline=outline)
+    article_draft = generate_article(topic=title, outline=outline)
+    
+    logger.info("Editing and evaluating article...")
+    article = edit_evaluate_article(article_draft)
     
     logger.info("Generating image...")
     image_url = generate_article_image(topic=title)

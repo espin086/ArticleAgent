@@ -16,8 +16,8 @@ ArticleAgent is a Python-based tool designed to automate the creation of Medium 
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/articleagent.git
-   cd articleagent
+   git clone https://github.com/espin086/ArticleAgent.git
+   cd ArticleAgent
    ```
 
 2. **Install Dependencies**:

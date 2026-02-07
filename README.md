@@ -15,161 +15,135 @@ ArticleAgent is a Python-based automation tool that generates publication-ready 
 
 ### System Architecture
 
-```mermaid
-graph TB
-    subgraph User Interface
-        CLI[CLI - argparse]
-    end
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          USER INTERFACE                             │
+│                         CLI (argparse)                              │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ topic
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      ORCHESTRATION LAYER                            │
+│              main.py — generate_article_process()                   │
+│                                                            ┌──────┐│
+│              Traced via @traceable decorator ──────────────►│Trace ││
+│                                                            └──────┘│
+└───┬──────────┬──────────┬──────────┬──────────┬─────────────────────┘
+    │          │          │          │          │
+    ▼          ▼          ▼          ▼          ▼
+┌────────┐┌────────┐┌────────┐┌────────┐┌──────────┐
+│ Write  ││ Write  ││ Write  ││ Edit   ││ Generate │  PROMPT
+│ Title  ││Outline ││Article ││Article ││  Image   │  TEMPLATES
+│ Prompt ││ Prompt ││ Prompt ││ Prompt ││  Prompt  │
+└───┬────┘└───┬────┘└───┬────┘└───┬────┘└────┬─────┘
+    │         │         │         │           │
+    ▼         ▼         ▼         ▼           ▼
+┌────────┐┌────────┐┌────────┐┌────────┐┌──────────┐
+│gpt-4o  ││o3-mini ││o3-mini ││o3-mini ││ DALL-E 3 │  OPENAI
+│ -mini  ││        ││        ││        ││          │  MODELS
+└────────┘└────────┘└────────┘└────────┘└──────────┘
 
-    subgraph Orchestration Layer
-        MAIN["main.py<br/>generate_article_process()"]
-    end
-
-    subgraph Prompt Templates
-        PT1[WriteTitlePrompt]
-        PT2[WriteOutlinePrompt]
-        PT3[WriteArticlePrompt]
-        PT4[EditArticlePrompt]
-        PT5[GenerateImagePrompt]
-    end
-
-    subgraph LangChain Pipeline
-        LC1["ChatOpenAI<br/>(gpt-4o-mini)"]
-        LC2["ChatOpenAI<br/>(o3-mini)"]
-        LC3["ChatOpenAI<br/>(o3-mini)"]
-        LC4["ChatOpenAI<br/>(o3-mini)"]
-        DALLE["OpenAI Images API<br/>(DALL-E 3)"]
-    end
-
-    subgraph Monitoring
-        LS[LangSmith Tracing]
-    end
-
-    CLI -->|topic| MAIN
-    MAIN --> PT1 --> LC1
-    MAIN --> PT2 --> LC2
-    MAIN --> PT3 --> LC3
-    MAIN --> PT4 --> LC4
-    MAIN --> PT5 --> DALLE
-    MAIN -.->|@traceable| LS
-
-    style CLI fill:#4A90D9,color:#fff
-    style MAIN fill:#2C3E50,color:#fff
-    style LS fill:#E67E22,color:#fff
-    style DALLE fill:#10A37F,color:#fff
-    style LC1 fill:#10A37F,color:#fff
-    style LC2 fill:#10A37F,color:#fff
-    style LC3 fill:#10A37F,color:#fff
-    style LC4 fill:#10A37F,color:#fff
+                    ┌──────────────────┐
+                    │    MONITORING    │
+                    │LangSmith Tracing │
+                    └──────────────────┘
 ```
 
 ### Article Generation Pipeline
 
 The pipeline follows a multi-stage process with parallel execution where possible:
 
-```mermaid
-flowchart LR
-    A["Topic Input"] --> B["1. Generate Title<br/><i>gpt-4o-mini</i>"]
-    B --> C{"Parallel Execution<br/>(asyncio.gather)"}
-    C --> D["2a. Generate Outline<br/><i>o3-mini</i>"]
-    C --> E["2b. Generate Image<br/><i>DALL-E 3</i>"]
-    D --> F["3. Write Article<br/><i>o3-mini</i>"]
-    E --> G["Image URL"]
-    F --> H["4. Edit & Review<br/><i>o3-mini</i>"]
-    H --> I["Final Article"]
-    I --> J(("Output"))
-    G --> J
-
-    style A fill:#3498DB,color:#fff
-    style C fill:#F39C12,color:#fff
-    style J fill:#27AE60,color:#fff
-    style B fill:#8E44AD,color:#fff
-    style D fill:#8E44AD,color:#fff
-    style E fill:#8E44AD,color:#fff
-    style F fill:#8E44AD,color:#fff
-    style H fill:#8E44AD,color:#fff
+```
+                                          ┌─────────────────────┐
+                                     ┌───►│ 2a. Generate Outline │
+                                     │    │      (o3-mini)       │──┐
+┌─────────┐   ┌──────────────────┐   │    └─────────────────────┘  │  ┌──────────────────┐
+│  Topic   │──►│ 1. Generate Title│───┤                             ├─►│ 3. Write Article │
+│  Input   │   │   (gpt-4o-mini)  │   │   PARALLEL                 │  │    (o3-mini)     │
+└─────────┘   └──────────────────┘   │   (asyncio.gather)          │  └────────┬─────────┘
+                                     │    ┌─────────────────────┐  │           │
+                                     └───►│ 2b. Generate Image  │  │           ▼
+                                          │    (DALL-E 3)       │──┘  ┌──────────────────┐
+                                          └─────────┬───────────┘     │ 4. Edit & Review │
+                                                    │                 │    (o3-mini)     │
+                                                    ▼                 └────────┬─────────┘
+                                              ┌───────────┐                    │
+                                              │ Image URL │                    ▼
+                                              └─────┬─────┘           ┌───────────────┐
+                                                    │                 │ Final Article │
+                                                    │                 └───────┬───────┘
+                                                    ▼                         ▼
+                                              ┌──────────────────────────────────┐
+                                              │            OUTPUT                │
+                                              │   (final_article, image_url)     │
+                                              └──────────────────────────────────┘
 ```
 
-### Data Flow Diagram
+### Data Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Main as main.py
-    participant Title as generate_title()
-    participant Outline as generate_outline()
-    participant Image as generate_article_image()
-    participant Article as generate_article()
-    participant Editor as edit_evaluate_article()
-    participant OpenAI as OpenAI API
-
-    User->>Main: topic
-    Main->>Title: topic
-    Title->>OpenAI: ChatOpenAI (gpt-4o-mini, temp=0)
-    OpenAI-->>Title: title string
-    Title-->>Main: title
-
-    par Parallel Execution
-        Main->>Outline: title
-        Outline->>OpenAI: ChatOpenAI (o3-mini)
-        OpenAI-->>Outline: structured outline
-        Outline-->>Main: outline
-    and
-        Main->>Image: title
-        Image->>OpenAI: DALL-E 3 (1024x1024 HD)
-        OpenAI-->>Image: image URL
-        Image-->>Main: image_url
-    end
-
-    Main->>Article: title + outline
-    Article->>OpenAI: ChatOpenAI (o3-mini)
-    OpenAI-->>Article: ~1000-word draft
-    Article-->>Main: article_draft
-
-    Main->>Editor: article_draft
-    Editor->>OpenAI: ChatOpenAI (o3-mini)
-    OpenAI-->>Editor: polished article
-    Editor-->>Main: final_article
-
-    Main-->>User: (final_article, image_url)
+```
+User            main.py          OpenAI API
+ │                │                   │
+ │── topic ──────►│                   │
+ │                │                   │
+ │                │── generate_title ─────────────────►│
+ │                │   (gpt-4o-mini, temp=0)            │
+ │                │◄── title ──────────────────────────│
+ │                │                                    │
+ │                │       ┌── PARALLEL ──────────┐     │
+ │                │       │                      │     │
+ │                │── generate_outline ──────────────►│
+ │                │       │  (o3-mini)           │     │
+ │                │◄── outline ─────────────────────── │
+ │                │       │                      │     │
+ │                │── generate_article_image ────────►│
+ │                │       │  (DALL-E 3, HD)      │     │
+ │                │◄── image_url ───────────────────── │
+ │                │       │                      │     │
+ │                │       └──────────────────────┘     │
+ │                │                                    │
+ │                │── generate_article ───────────────►│
+ │                │   (o3-mini, title + outline)       │
+ │                │◄── article_draft ──────────────────│
+ │                │                                    │
+ │                │── edit_evaluate_article ──────────►│
+ │                │   (o3-mini)                        │
+ │                │◄── final_article ──────────────────│
+ │                │                                    │
+ │◄── (article, ──│                                    │
+ │    image_url)  │                                    │
 ```
 
 ### Model Usage by Stage
 
-```mermaid
-graph LR
-    subgraph Stage 1
-        T[Title Generation]
-        T --- M1["gpt-4o-mini<br/>temp=0"]
-    end
-
-    subgraph "Stage 2 (Parallel)"
-        O[Outline Creation]
-        I[Image Generation]
-        O --- M2[o3-mini]
-        I --- M3["DALL-E 3<br/>1024x1024 HD"]
-    end
-
-    subgraph Stage 3
-        A[Article Writing]
-        A --- M4[o3-mini]
-    end
-
-    subgraph Stage 4
-        E[Edit & Review]
-        E --- M5[o3-mini]
-    end
-
-    T --> O
-    T --> I
-    O --> A
-    A --> E
-
-    style M1 fill:#10A37F,color:#fff
-    style M2 fill:#10A37F,color:#fff
-    style M3 fill:#10A37F,color:#fff
-    style M4 fill:#10A37F,color:#fff
-    style M5 fill:#10A37F,color:#fff
+```
+┌──────────────────┐     ┌────────────────────────────────────┐
+│     STAGE 1      │     │        STAGE 2 (PARALLEL)          │
+│                  │     │                                    │
+│  Title           │     │  Outline          Image            │
+│  Generation      │     │  Creation         Generation       │
+│       │          │     │       │                │           │
+│       ▼          │     │       ▼                ▼           │
+│  ┌──────────┐   │     │  ┌─────────┐     ┌──────────┐     │
+│  │gpt-4o-   │   │────►│  │ o3-mini │     │ DALL-E 3 │     │
+│  │mini      │   │     │  │         │     │1024x1024 │     │
+│  │temp=0    │   │     │  └─────────┘     │   HD     │     │
+│  └──────────┘   │     │                  └──────────┘     │
+└──────────────────┘     └───────────────────┬───────────────┘
+                                             │
+                                             ▼
+┌──────────────────┐     ┌──────────────────────────────────┐
+│     STAGE 3      │     │           STAGE 4                │
+│                  │     │                                  │
+│  Article         │     │  Edit & Review                   │
+│  Writing         │     │                                  │
+│       │          │     │       │                          │
+│       ▼          │     │       ▼                          │
+│  ┌─────────┐    │     │  ┌─────────┐                    │
+│  │ o3-mini │    │────►│  │ o3-mini │                    │
+│  │         │    │     │  │         │                    │
+│  └─────────┘    │     │  └─────────┘                    │
+└──────────────────┘     └──────────────────────────────────┘
 ```
 
 ---
